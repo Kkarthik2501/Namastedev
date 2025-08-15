@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
     gender: {
         type: String,
         validate(value) {
-            if (!["male", "female", "others"].includes(value)) {
+            if (!["male", "female", "others"].includes(value.toLowerCase())) {
                 throw new Error("Gender is not allowed")
             }
         }
@@ -83,7 +83,9 @@ userSchema.methods.getJWT = async function () {
 userSchema.methods.verifyPassword = async function (password) {
     const user = this
     const hashpassword = user.password
-    const isValidPassword = bcrypt.compare(password, hashpassword)
+    console.log("hashpassword", hashpassword)
+    const isValidPassword = await bcrypt.compare(password, hashpassword)
+    console.log("isValid", isValidPassword)
     return isValidPassword
 }
 const User = mongoose.model("User", userSchema);

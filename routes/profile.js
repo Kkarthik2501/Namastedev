@@ -8,14 +8,15 @@ profileRoutes.get("/profile/view", userAuth, async (req, res) => {
     try {
         const user = req.user
 
-        res.send(user)
+        return res.status(200).json({ data: user, success: true })
     }
     catch (err) {
-        res.status(400).send("Something went wrong" + err.message);
+        return res.status(400).json({ error: "Something went wrong" + err.message, success: false });
     }
 })
 profileRoutes.patch("/profile/edit", userAuth, async (req, res) => {
     try {
+        console.log("req body", req.body)
         const isValid = validateEditProfile(req);
         const LoggedInUser = req.user;
         if (!isValid) {
@@ -23,10 +24,10 @@ profileRoutes.patch("/profile/edit", userAuth, async (req, res) => {
         }
         Object.keys(req.body).forEach((key) => LoggedInUser[key] = req.body[key])
         LoggedInUser.save()
-        res.json({ message: `${LoggedInUser.firstName} your profile has been updated`, data: LoggedInUser })
+        return res.json({ message: `${LoggedInUser.firstName} your profile has been updated`, data: LoggedInUser, success: true })
     }
     catch (err) {
-        res.status(400).send("Something went wrong" + err.message);
+        return res.status(400).json({ error: "Something went wrong" + err.message, success: false });
     }
 })
 profileRoutes.patch('/profile/password', userAuth, async (req, res) => {
@@ -41,10 +42,10 @@ profileRoutes.patch('/profile/password', userAuth, async (req, res) => {
         }
         user.password = newPassword
         user.save();
-        res.status(200).send("Password updated successfully")
+        return res.status(200).json({ message: "Password updated successfully", success: true })
     }
     catch (err) {
-        res.status(400).send("Error : " + err.message)
+        return res.status(400).json({ error: "Error : " + err.message, success: false })
     }
 }
 )

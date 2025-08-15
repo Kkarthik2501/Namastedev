@@ -19,37 +19,41 @@ authRoutes.post("/signup", async (req, res) => {
             password: hashpassword
         }) //creating new instance of user model and then save it
         await user.save({ runValidators: true })
-        res.send("User saved successfully")
+        const token = await user.getJWT()
+        res.cookie("token", token)
+        return res.status(200).json({ message: "User saved successfully", data: user, success: true })
     }
     catch (err) {
-        res.status(400).send("Error : " + err)
+        return res.status(400).json({ error: err.message, success: false })
+        // res.status(400).send("Error : " + err.message)
+
     }
 })
 
-authRoutes.get("/login", async (req, res) => {
+authRoutes.post("/login", async (req, res) => {
     try {
         const { emailId, password } = req.body
         if (!validator.isEmail(emailId)) {
-            throw new Error("Invalid credentials")
+            return res.status(400).json({ error: "Invalid credentials", success: false })
         }
         const user = await User.findOne({ emailId: emailId })
         if (!user) {
-            throw new Error("Invalid credentials")
+            return res.status(400).json({ error: "Invalid credentials", success: false })
         }
         const token = await user.getJWT() //generating a token using helper function defined in schema
-        const isValidPassword = user.verifyPassword(password)
+        const isValidPassword = await user.verifyPassword(password)
         if (!isValidPassword) {
-            throw new Error("Invalid credentials")
+            return res.status(400).json({ error: "Invalid credentials", success: false })
         }
         res.cookie("token", token)
-        res.send("Successfully logged in")
+        return res.status(200).json({ message: "Successfully logged in", data: user, success: true })
     }
     catch (err) {
-        res.status(400).send("Error : " + err)
+        return res.status(400).json({ error: err.message, success: false })
     }
 })
 authRoutes.get("/logout", async (req, res) => {
     res.cookie("token", null, { expires: new Date(Date.now()) })
-    res.send("Logged out successfully")
+    return res.status(200).json({ message: "Logged out successfully", success: true })
 })
 module.exports = authRoutes

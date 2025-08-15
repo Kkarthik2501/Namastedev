@@ -24,8 +24,7 @@ connectionRoutes.post("/request/send/:status/:userId", userAuth, async (req, res
         if (!userId) {
             throw new Error("User not found")
         }
-        console.log("fromUserId", fromUserId)
-        console.log("toUserID", toUserId)
+
         const existingConnection = await ConnectionRequestModel.find({
             $or: [
                 { fromUserId, toUserId },
@@ -33,8 +32,7 @@ connectionRoutes.post("/request/send/:status/:userId", userAuth, async (req, res
             ]
         })
         if (existingConnection.length > 0) {
-            console.log("existing Connection", existingConnection)
-            throw new Error("You have alread sent a connection ")
+            throw new Error("You have already sent a connection ")
         }
         const connectionRequest = new ConnectionRequestModel({
             fromUserId,
@@ -42,10 +40,10 @@ connectionRoutes.post("/request/send/:status/:userId", userAuth, async (req, res
             status
         })
         const data = await connectionRequest.save()
-        res.json({ message: `${req.user.firstName} is ${status} in ${toUserId}`, data: data })
+        return res.json({ message: `${req.user.firstName} is ${status} in ${toUserId}`, data: data, success: true })
     }
     catch (err) {
-        res.status(400).send("Error " + err.message)
+        return res.status(400).json({ error: err.message, success: false })
     }
 })
 
@@ -54,23 +52,21 @@ connectionRoutes.post("/request/review/:status/:requestId", userAuth, async (req
     try {
         const { status, requestId } = req.params
         const loggedInUser = req.user._id.toString()
-        const allowedStatus = ["accepted", "ignored"]
+        const allowedStatus = ["accepted", "ignored", "rejected"]
         if (!allowedStatus.includes(status)) {
             throw new Error("Invalid status")
         }
-        console.log("requestid", requestId)
-        const connectionRequest = await ConnectionRequestModel.findOne({ _id: requestId, fromUserId: loggedInUser, status: "interested" })
+        const connectionRequest = await ConnectionRequestModel.findOne({ _id: requestId, toUserId: loggedInUser, status: "interested" })
         if (!connectionRequest) {
-            console.log("connectionRequest", connectionRequest)
             throw new Error("Request not found")
         }
         connectionRequest.status = status
         const response = await connectionRequest.save()
-        return res.status(200).json({ message: "Connection Request" + status, data: response })
+        return res.status(200).json({ message: "Connection Request" + status, data: response, success: true })
 
     }
     catch (err) {
-        res.status(400).send("Error " + err.message)
+        return res.status(400).json({ error: err.message, success: false })
     }
 })
 module.exports = connectionRoutes

@@ -8,7 +8,12 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const cookieparser = require('cookie-parser')
 const userAuth = require('./middleware/auth')
-app.use(express.json())
+const cors = require('cors')
+app.use(cors({
+    origin: "http://localhost:5173", // whitelisting the api , only this origin can access the api and cookie will be set in cookie in broswer
+    credentials: true
+})) // to allow different origin(Ip address) to access the server
+app.use(express.json()) // converts the incoming data which is in form of json to js object
 app.use(cookieparser())
 const authRoutes = require('./routes/auth')
 const profileRoutes = require('./routes/profile')
@@ -26,10 +31,10 @@ app.get("/feed", async (req, res) => {
         console.log("cookie", decoded)
         const users = await User.find({})
 
-        res.send(users)
+        res.status(200).json({ data: users, success: true })
     }
     catch (err) {
-        res.status(400).send("Something went wrong");
+        res.status(400).json({ error: "Something went wrong", success: false });
     }
 })
 
@@ -41,12 +46,12 @@ app.patch("/user/:userId", async (req, res) => {
         const ALLOWED_UPDATES = ["age", "skills", "firstName", "lastName", "password", "about", "photoURL"] //restricting updation only on some fields
         const isAllowed = Object.keys(data).every((key) => ALLOWED_UPDATES.includes(key));
         if (!isAllowed) {
-            return res.status(400).send("Cannot update some fields")
+            return res.status(400).json({ error: "Cannot update some fields", success: false })
         }
         await User.findByIdAndUpdate({ _id: userId }, data, {
             runValidators: true
         })
-        res.send("User Updated Successfully")
+        res.status(200).json({ message: "User Updated Successfully" })
     }
     catch (err) {
         res.send("Something went wrong")
