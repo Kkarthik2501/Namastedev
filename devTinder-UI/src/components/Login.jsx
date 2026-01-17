@@ -22,7 +22,7 @@ const Login = () => {
             }
             else {
                 const res = await dispatch(signUpUser({ firstName, lastName, emailId: email, password }));
-                if (res.payload?.status != 200) {
+                if (res?.status != 200) {
                     toast.error(res.payload?.response?.data?.error || 'Signup failed');
                 }
             }
